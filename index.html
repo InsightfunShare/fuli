@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>复利计算器 · 集智芬享</title>
+  <link rel="icon" type="image/png" href="logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:ital,wght@0,400;0,500;0,600;1,400&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="site-header">
+      <div class="brand">
+        <a class="brand-link" href="#" aria-label="集智芬享">
+          <img class="brand-logo" src="logo.png" alt="" width="34" height="34" />
+          <span class="brand-name">集智芬享</span>
+        </a>
+      </div>
+
+      <nav class="site-nav">
+        <a href="#calculator">计算器</a>
+        <a href="#target">目标利率</a>
+        <a href="#breakdown">明细</a>
+        <a href="#about">关于复利</a>
+      </nav>
+
+      <div class="currency-switch">
+        <span class="cs-icon" aria-hidden="true">
+          <svg viewBox="0 0 20 20" width="14" height="14">
+            <circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M3 10 H17 M10 3 C13 6 13 14 10 17 M10 3 C7 6 7 14 10 17" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          </svg>
+        </span>
+        <select id="currency" data-cs="pill" aria-label="选择货币"></select>
+        <button type="button" id="apiKeyBtn" class="cs-settings" title="配置汇率 API Key" aria-label="配置 API Key">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 15.5 a3.5 3.5 0 1 0 0 -7 a3.5 3.5 0 0 0 0 7 z"/>
+            <path d="M19.4 15 a1.65 1.65 0 0 0 .33 1.82 l.06 .06 a2 2 0 1 1 -2.83 2.83 l-.06 -.06 a1.65 1.65 0 0 0 -1.82 -.33 1.65 1.65 0 0 0 -1 1.51 V21 a2 2 0 0 1 -4 0 v-.09 A1.65 1.65 0 0 0 9 19.4 a1.65 1.65 0 0 0 -1.82 .33 l-.06 .06 a2 2 0 1 1 -2.83 -2.83 l.06 -.06 a1.65 1.65 0 0 0 .33 -1.82 1.65 1.65 0 0 0 -1.51 -1 H3 a2 2 0 0 1 0 -4 h.09 A1.65 1.65 0 0 0 4.6 9 a1.65 1.65 0 0 0 -.33 -1.82 l-.06 -.06 a2 2 0 1 1 2.83 -2.83 l.06 .06 a1.65 1.65 0 0 0 1.82 .33 H9 a1.65 1.65 0 0 0 1 -1.51 V3 a2 2 0 0 1 4 0 v.09 a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82 -.33 l.06 -.06 a2 2 0 1 1 2.83 2.83 l-.06 .06 a1.65 1.65 0 0 0 -.33 1.82 V9 a1.65 1.65 0 0 0 1.51 1 H21 a2 2 0 0 1 0 4 h-.09 a1.65 1.65 0 0 0 -1.51 1 z"/>
+          </svg>
+        </button>
+        <span id="rateStatus" class="rate-status" aria-live="polite"></span>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <p class="eyebrow">Compound Interest</p>
+        <h1 class="hero-title">让时间，<em>替你赚钱。</em></h1>
+        <p class="hero-subtitle">一个安静、克制的复利计算器。输入本金、利率、时间，看清楚每一期的滚动效果。</p>
+      </section>
+
+      <section id="calculator" class="calculator">
+        <div class="card form-card">
+          <h2 class="card-title">参数设置</h2>
+          <p class="card-hint">所有金额以 <strong id="hintCurrency">美元 (USD)</strong> 计算，结果仅供参考。</p>
+
+          <form id="calc-form" class="form-grid" autocomplete="off">
+            <div class="field">
+              <span class="field-label">初始本金</span>
+              <span class="input-wrap">
+                <span class="prefix" id="prefixPrincipal">¥</span>
+                <input type="number" name="principal" id="principal" min="0" step="100" value="10000" required />
+              </span>
+            </div>
+
+            <div class="field">
+              <span class="field-label">每期追加投入</span>
+              <span class="input-wrap">
+                <span class="prefix" id="prefixContribution">¥</span>
+                <input type="number" name="contribution" id="contribution" min="0" step="100" value="0" />
+              </span>
+            </div>
+
+              <div class="field">
+                <span class="field-label">利率</span>
+                <span class="input-wrap input-wrap-split">
+                  <input type="number" name="rate" id="rate" min="0" max="100" step="0.001" value="5" required />
+                  <span class="suffix">%</span>
+                  <span class="split-divider"></span>
+                  <select id="rateUnit" data-cs="inline" aria-label="利率周期">
+                    <option value="years" selected>年</option>
+                    <option value="months">月</option>
+                    <option value="days">天</option>
+                  </select>
+                </span>
+              </div>
+
+              <div class="field">
+                <span class="field-label">投资时长</span>
+                <span class="input-wrap input-wrap-split">
+                  <input type="number" name="duration" id="duration" min="1" step="1" value="5" required />
+                  <span class="split-divider"></span>
+                  <select id="durationUnit" data-cs="inline" aria-label="时长单位">
+                    <option value="years" selected>年</option>
+                    <option value="months">月</option>
+                    <option value="days">天</option>
+                  </select>
+                </span>
+              </div>
+
+              <div class="field field-full">
+                <span class="field-label">追加方式</span>
+                <select name="contribTiming" id="contribTiming" data-cs="default">
+                  <option value="end" selected>期末</option>
+                  <option value="start">期初</option>
+                </select>
+              </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">开始计算</button>
+              <button type="reset" class="btn btn-ghost" id="reset-btn">重置</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card result-card">
+          <h2 class="card-title">结果</h2>
+
+          <div class="result-main">
+            <p class="result-label">期末总金额</p>
+            <p class="result-value" id="finalAmount">—</p>
+          </div>
+
+          <div class="result-grid">
+            <div class="stat">
+              <span class="stat-label">本金合计</span>
+              <span class="stat-value" id="totalContributed">—</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">利息收益</span>
+              <span class="stat-value accent" id="totalInterest">—</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">收益倍数</span>
+              <span class="stat-value" id="multiple">—</span>
+            </div>
+          </div>
+
+          <div class="chart-wrap">
+            <canvas id="growthChart" aria-label="资产增长曲线"></canvas>
+            <div class="chart-legend">
+              <span><i class="dot dot-principal"></i>本金累计</span>
+              <span><i class="dot dot-total"></i>资产总额</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="target" class="target-section">
+        <div class="section-head">
+          <div>
+            <h2>目标利率反推</h2>
+            <p>给定本金、目标金额和时长，算出每期需要多少利率。</p>
+          </div>
+        </div>
+
+        <div class="calculator">
+          <div class="card form-card">
+            <h2 class="card-title">目标设置</h2>
+            <p class="card-hint">假设没有追加投入，按所选频率复利。</p>
+
+            <form id="target-form" class="form-grid" autocomplete="off">
+              <div class="field">
+                <span class="field-label">初始本金</span>
+                <span class="input-wrap">
+                  <span class="prefix" id="prefixTargetPrincipal">¥</span>
+                  <input type="number" id="targetPrincipal" min="0" step="100" value="10000" required />
+                </span>
+              </div>
+
+              <div class="field">
+                <span class="field-label">期望金额</span>
+                <span class="input-wrap">
+                  <span class="prefix" id="prefixTargetGoal">¥</span>
+                  <input type="number" id="targetGoal" min="0" step="100" value="100000" required />
+                </span>
+              </div>
+
+              <div class="field">
+                <span class="field-label">投资时长</span>
+                <span class="input-wrap input-wrap-split">
+                  <input type="number" id="targetDuration" min="1" step="1" value="20" required />
+                  <span class="split-divider"></span>
+                  <select id="targetDurationUnit" data-cs="inline" aria-label="时长单位">
+                    <option value="years" selected>年</option>
+                    <option value="months">月</option>
+                    <option value="days">天</option>
+                  </select>
+                </span>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">反推利率</button>
+                <button type="reset" class="btn btn-ghost" id="target-reset">重置</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="card result-card">
+            <h2 class="card-title">所需利率</h2>
+
+            <div class="result-main">
+              <p class="result-label" id="targetRateLabel">年利率</p>
+              <p class="result-value accent" id="targetRateValue">—</p>
+            </div>
+
+            <div class="rate-tabs" role="tablist" aria-label="利率周期">
+              <button type="button" class="rate-tab is-active" data-unit="years" role="tab">年</button>
+              <button type="button" class="rate-tab" data-unit="months" role="tab">月</button>
+              <button type="button" class="rate-tab" data-unit="days" role="tab">天</button>
+            </div>
+
+            <div class="result-grid result-grid-3">
+              <div class="stat">
+                <span class="stat-label">年利率</span>
+                <span class="stat-value" id="targetRateYear">—</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">月利率</span>
+                <span class="stat-value" id="targetRateMonth">—</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">日利率</span>
+                <span class="stat-value" id="targetRateDay">—</span>
+              </div>
+            </div>
+
+            <p class="target-hint" id="targetHint"></p>
+          </div>
+        </div>
+      </section>
+
+      <section id="breakdown" class="breakdown">
+        <div class="section-head">
+          <div>
+            <h2>增长明细</h2>
+            <p>按所选时长单位分段显示，最多 30 行。</p>
+          </div>
+          <button type="button" class="btn btn-ghost btn-export" id="exportBtn">
+            <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+              <path d="M8 2 V11 M4 7 L8 11 L12 7 M2.5 13 H13.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            导出图片
+          </button>
+        </div>
+
+        <div class="table-wrap">
+          <table class="table" id="yearTable">
+            <thead>
+              <tr>
+                <th>时段</th>
+                <th>当期投入</th>
+                <th>累计投入</th>
+                <th>当期利息</th>
+                <th>累计利息</th>
+                <th>期末总额</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="about" class="about">
+        <div class="about-inner">
+          <h2>什么是复利</h2>
+          <p>复利的本质很简单：<strong>利息也开始赚利息</strong>。第一期你赚到的收益，会和本金一起，进入下一期继续滚动。</p>
+          <p>公式可以写成：<code>FV = P × (1 + r/n)<sup>n·t</sup></code>，其中 <em>P</em> 是本金，<em>r</em> 是年利率，<em>n</em> 是每年复利次数，<em>t</em> 是年限（月、天会自动换算）。</p>
+          <p class="muted">汇率由 ExchangeRate-API 实时提供。换算结果用于参考，并不代表真实交易价格。</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>© 集智芬享</span>
+      <span class="footer-quote">"The most powerful force in the universe is compound interest."</span>
+    </footer>
+  </div>
+
+  <div class="modal" id="apiKeyModal" role="dialog" aria-modal="true" aria-labelledby="apiKeyTitle">
+    <div class="modal-card">
+      <h3 class="modal-title" id="apiKeyTitle">配置汇率 API Key</h3>
+      <p class="modal-desc">
+        本工具的货币换算由 <a href="https://www.exchangerate-api.com/" target="_blank" rel="noopener">ExchangeRate-API</a> 提供。前往官网注册即可获得免费 Key，每月 1500 次调用足够个人使用。
+      </p>
+
+      <ol class="modal-steps">
+        <li>访问 <code>exchangerate-api.com</code> 用邮箱注册</li>
+        <li>在 dashboard 复制你的 API Key</li>
+        <li>粘贴到下面的输入框，点"保存并校验"</li>
+      </ol>
+
+      <label class="modal-field">
+        <span class="modal-label">API Key</span>
+        <span class="input-wrap">
+          <input type="text" id="apiKeyInput" placeholder="例如 a1b2c3d4e5f6g7h8i9j0k1l2" autocomplete="off" spellcheck="false" />
+        </span>
+      </label>
+
+      <p class="modal-tip" id="apiKeyTip">Key 仅保存在你的浏览器本地，不会上传到任何服务器。</p>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="apiKeyClear">清空</button>
+        <button type="button" class="btn btn-ghost" id="apiKeyCancel">取消</button>
+        <button type="button" class="btn btn-primary" id="apiKeySave">保存并校验</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

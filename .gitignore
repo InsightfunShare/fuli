@@ -1,0 +1,21 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.kiro/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Env / secrets（防止误提交真实 API Key）
+.env
+.env.*
+*.key
+secrets.json
